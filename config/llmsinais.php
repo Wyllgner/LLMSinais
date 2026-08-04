@@ -4,8 +4,19 @@ return [
 
     'openai' => [
         'key'   => env('OPENAI_API_KEY'),
-        'model' => env('OPENAI_MODEL', 'gpt-4o-mini'),
+        'model' => env('OPENAI_MODEL', 'gpt-5-nano'),
         'base'  => env('OPENAI_BASE', 'https://api.openai.com/v1'),
+
+        // A familia gpt-5 rejeita temperature diferente do padrao e usa
+        // max_completion_tokens no lugar de max_tokens. O limite precisa de
+        // folga porque os tokens de raciocinio contam aqui dentro.
+        'max_tokens' => (int) env('OPENAI_MAX_TOKENS', 800),
+        'reasoning_effort' => env('OPENAI_REASONING_EFFORT', 'low'),
+
+        // Precos em dolares por milhao de tokens, para o relatorio de custo.
+        // Deixe vazio se nao souber: o relatorio mostra so os tokens.
+        'preco_entrada' => env('OPENAI_PRECO_ENTRADA'),
+        'preco_saida' => env('OPENAI_PRECO_SAIDA'),
     ],
 
     'sandbox' => [
