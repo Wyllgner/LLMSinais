@@ -1,0 +1,20 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class FeedbackLevel extends Model
+{
+    protected $fillable = ['attempt_id', 'nivel', 'texto', 'segmentos'];
+
+    protected $casts = [
+        'segmentos' => 'array',
+    ];
+
+    public function attempt(): BelongsTo
+    {
+        return $this->belongsTo(Attempt::class);
+    }
+}
