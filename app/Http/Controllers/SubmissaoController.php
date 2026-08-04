@@ -4,13 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Models\Attempt;
 use App\Models\Exercise;
+use App\Services\ClassificadorErro;
 use App\Services\CorretorService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class SubmissaoController extends Controller
 {
-    public function __construct(private CorretorService $corretor) {}
+    public function __construct(
+        private CorretorService $corretor,
+        private ClassificadorErro $classificador,
+    ) {}
 
     public function store(Request $request, Exercise $exercicio): JsonResponse
     {
@@ -20,13 +24,18 @@ class SubmissaoController extends Controller
 
         $resultados = $this->corretor->corrigir($exercicio, $dados['codigo']);
         $falhou = collect($resultados)->firstWhere('passou', false);
+        $tipoErro = $this->classificador->classificar($resultados);
+
+        // Sem falha nao ha stderr, e o campo do banco guarda null em vez de string vazia.
+        $stderr = ($falhou['stderr'] ?? '') ?: null;
 
         $tentativa = Attempt::create([
             'sessao_uuid' => $request->session()->get('sessao_uuid'),
             'exercise_id' => $exercicio->id,
             'codigo' => $dados['codigo'],
             'passou' => $falhou === null,
-            'stderr_bruto' => $falhou['stderr'] ?? null,
+            'tipo_erro' => $tipoErro,
+            'stderr_bruto' => $stderr,
             'resultado_testes' => $resultados,
         ]);
 
@@ -39,7 +48,9 @@ class SubmissaoController extends Controller
                 'status' => $r['status'],
             ]),
             'total' => count($exercicio->casos_teste),
-            'stderr' => $falhou['stderr'] ?? null,
+            'stderr' => $stderr,
+            'tipo_erro' => $tentativa->passou ? null : $tipoErro,
+            'tipo_erro_rotulo' => $tentativa->passou ? null : $this->classificador->rotuloHumano($tipoErro),
         ]);
     }
 }
