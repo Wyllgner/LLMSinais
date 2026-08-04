@@ -64,6 +64,15 @@ function desenhar(dados) {
         })
         .join('');
 
+    const diagnostico = dados.tipo_erro
+        ? `<div class="rounded-md border border-slate-200 bg-white p-4">
+             <h3 class="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500">O que aconteceu</h3>
+             <span class="inline-block rounded-full bg-amber-100 px-3 py-1 text-sm font-medium text-amber-900">
+               ${escapar(dados.tipo_erro_rotulo)}
+             </span>
+           </div>`
+        : '';
+
     // Bloco 1 do escalonamento: o erro bruto, sem reescrita.
     const bruto = dados.stderr
         ? `<div class="rounded-md border border-slate-200 bg-white p-4">
@@ -75,6 +84,7 @@ function desenhar(dados) {
     painel.innerHTML = `
         ${cabecalho}
         <ul class="rounded-md border border-slate-200 bg-white p-4 text-sm">${lista}</ul>
+        ${diagnostico}
         ${bruto}
     `;
 }
