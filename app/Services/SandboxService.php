@@ -13,6 +13,12 @@ use Symfony\Component\Process\Process;
  */
 class SandboxService
 {
+    /**
+     * Um laco infinito que imprime gera megabytes em segundos. Sem esse teto o
+     * volume vai parar no banco e no prompt da LLM.
+     */
+    private const LIMITE_SAIDA = 8192;
+
     public function executar(string $codigo, string $entrada): array
     {
         $cfg = config('llmsinais.sandbox');
@@ -26,24 +32,53 @@ class SandboxService
         $proc->setInput($entrada);
         $proc->setTimeout($cfg['timeout'] + 5);
 
+        $stdout = '';
+        $stderr = '';
+        $truncado = false;
+
         try {
-            $proc->run();
+            $proc->run(function (string $tipo, string $trecho) use (&$stdout, &$stderr, &$truncado) {
+                if ($tipo === Process::OUT) {
+                    $stdout = $this->acumular($stdout, $trecho, $truncado);
+                } else {
+                    $stderr = $this->acumular($stderr, $trecho, $truncado);
+                }
+            });
+
             $saida = [
-                'stdout' => $proc->getOutput(),
-                'stderr' => $proc->getErrorOutput(),
+                'stdout' => $stdout,
+                'stderr' => $stderr,
                 'exit' => $proc->getExitCode(),
             ];
         } catch (ProcessTimedOutException) {
             // O timeout interno do container falhou, entao derruba pelo daemon.
             (new Process(['docker', 'kill', $nome]))->run();
-            $saida = ['stdout' => '', 'stderr' => '', 'exit' => 137];
+            $saida = ['stdout' => $stdout, 'stderr' => $stderr, 'exit' => 137];
         } finally {
             File::deleteDirectory($dir);
         }
 
         $saida['status'] = $this->status($saida['exit']);
+        $saida['truncado'] = $truncado;
 
         return $saida;
+    }
+
+    private function acumular(string $atual, string $trecho, bool &$truncado): string
+    {
+        $espaco = self::LIMITE_SAIDA - strlen($atual);
+
+        if ($espaco <= 0) {
+            $truncado = true;
+
+            return $atual;
+        }
+
+        if (strlen($trecho) > $espaco) {
+            $truncado = true;
+        }
+
+        return $atual.substr($trecho, 0, $espaco);
     }
 
     private function comando(array $cfg, string $dir, string $nome): array
