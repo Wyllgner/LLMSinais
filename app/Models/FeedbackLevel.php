@@ -7,7 +7,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class FeedbackLevel extends Model
 {
-    protected $fillable = ['attempt_id', 'nivel', 'texto', 'segmentos'];
+    protected $fillable = [
+        'attempt_id', 'nivel', 'texto', 'segmentos',
+        'tokens_entrada', 'tokens_saida', 'tokens_raciocinio', 'chamadas',
+    ];
 
     protected $casts = [
         'segmentos' => 'array',
