@@ -62,49 +62,13 @@ class Sincronizador {
     }
 
     /**
-     * Plano A: seleciona o trecho no DOM, que e o gatilho que o widget escuta.
+     * O plugin expoe window.plugin.translate, que e como ele traduz o proprio
+     * texto internamente. O trecho vem do data-texto, entao o que o avatar
+     * recebe e exatamente o segmento, sem depender de selecao nem de DOM.
      */
     enviarAoVLibras(elemento) {
-        const selecao = window.getSelection();
-        if (!selecao) return;
-
-        const intervalo = document.createRange();
-        intervalo.selectNodeContents(elemento);
-        selecao.removeAllRanges();
-        selecao.addRange(intervalo);
-
-        document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
-
-        // A selecao nativa pinta por cima do realce amarelo. O widget ja leu o
-        // texto no mouseup, entao ela pode sair e deixar o realce aparecer.
-        setTimeout(() => window.getSelection()?.removeAllRanges(), 150);
-    }
-
-    /**
-     * Plano B: o aluno seleciona o texto com o mouse, comportamento nativo do
-     * widget, e o realce acompanha. Depende so de API padrao do navegador.
-     */
-    acompanharSelecaoManual() {
-        document.addEventListener('selectionchange', () => {
-            const texto = window.getSelection()?.toString().trim();
-            if (!texto || texto.length < 3) return;
-
-            const alvo = [...document.querySelectorAll('.segmento')].find(
-                (s) => s.dataset.texto.includes(texto) || texto.includes(s.dataset.texto)
-            );
-
-            if (!alvo) return;
-
-            const bloco = alvo.closest('.bloco-traduzivel');
-            if (bloco !== this.blocoAtivo) {
-                this.limparRealce(this.blocoAtivo);
-                this.blocoAtivo = bloco;
-            }
-
-            this.indice = this.segmentos.indexOf(alvo);
-            this.realcar(alvo);
-            this.atualizarControles();
-        });
+        const texto = elemento.dataset.texto?.trim();
+        if (texto) window.plugin?.translate(texto);
     }
 
     atualizarControles() {
@@ -154,36 +118,40 @@ function abrirWidget() {
 }
 
 /**
- * O widget traduz o texto do elemento clicado. Sem isso, clicar em Proximo faz
- * o avatar soletrar a palavra PROXIMO no lugar da frase.
+ * A captura de texto por clique do widget e o que faz o avatar soletrar
+ * PROXIMO. Ela nao e configuravel: o plugin sempre chama
+ * loadTextCaptureScript() ao abrir, e o script registra
+ * document.addEventListener('click', handler, true). O handler traduz o
+ * innerText do elemento clicado e ainda chama preventDefault e
+ * stopPropagation. Como todo BUTTON entra na regra dele, nenhum botao da tela
+ * escapa, e o clique tambem nao chega aos nossos proprios listeners.
+ *
+ * Tentativas que nao resolveram: preventDefault e stopPropagation no mousedown
+ * e no mouseup em fase de captura, e select-none nos botoes. Nenhuma toca o
+ * evento que ele de fato escuta, que e o click.
+ *
+ * Aqui a instalacao do listener e barrada na origem. O resto do fluxo de
+ * eventos da pagina continua normal, e a traducao passa a sair so de
+ * window.plugin.translate, chamado por nos com o texto exato do segmento.
+ *
+ * Isto depende do funcionamento interno do widget. Se uma versao futura mudar
+ * a forma de registrar o listener, o sintoma volta a ser o avatar soletrando
+ * o rotulo dos botoes.
  */
-function protegerControles(seletor) {
-    document.addEventListener(
-        'mousedown',
-        (e) => {
-            if (e.target.closest(seletor)) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-        },
-        true
-    );
+function bloquearCapturaDeCliqueDoWidget() {
+    const original = document.addEventListener.bind(document);
 
-    document.addEventListener(
-        'mouseup',
-        (e) => {
-            // O mouseup sintetico tem o document como alvo e precisa passar.
-            if (e.target !== document && e.target.closest?.(seletor)) {
-                e.stopPropagation();
-            }
-        },
-        true
-    );
+    document.addEventListener = function (tipo, ouvinte, opcoes) {
+        const captura = opcoes === true || opcoes?.capture === true;
+
+        if (tipo === 'click' && captura) return;
+
+        return original(tipo, ouvinte, opcoes);
+    };
 }
 
 export function iniciarVLibras() {
-    sincronizador.acompanharSelecaoManual();
-    protegerControles('#controles-vlibras, .btn-traduzir, #btn-submeter, #btn-mais-ajuda, #btn-simplificar');
+    bloquearCapturaDeCliqueDoWidget();
     abrirWidget();
 
     // Delegacao: os blocos de erro e feedback so existem depois da submissao.
