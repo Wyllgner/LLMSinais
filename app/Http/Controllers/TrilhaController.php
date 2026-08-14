@@ -3,11 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Exercise;
+use App\Services\ProgressoService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class TrilhaController extends Controller
 {
+    public function __construct(private ProgressoService $progresso) {}
+
     public function index(Request $request): View
     {
         $sessao = $request->session()->get('sessao_uuid');
@@ -22,6 +25,9 @@ class TrilhaController extends Controller
             $liberado = $exercicio->concluido;
         }
 
-        return view('trilha', compact('exercicios'));
+        return view('trilha', [
+            'exercicios' => $exercicios,
+            'progresso' => $this->progresso->resumo($sessao),
+        ]);
     }
 }
