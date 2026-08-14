@@ -28,6 +28,8 @@ class LexicoSinais
         'INDEXERROR', 'VALUEERROR', 'INDENTATIONERROR', 'ZERODIVISIONERROR',
         'EOFERROR', 'KEYERROR', 'ATTRIBUTEERROR', 'LOOP', 'ARRAY', 'STRING',
         'DEBUG', 'BUG', 'SOFTWARE', 'HARDWARE', 'ENTER',
+        // Entram com os exercicios 6 a 9 da trilha.
+        'APPEND', 'SUM', 'ROUND', 'SORT', 'SPLIT', 'UPPER', 'LOWER', 'INDEX',
     ];
 
     /**
