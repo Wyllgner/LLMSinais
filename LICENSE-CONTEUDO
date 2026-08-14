@@ -1,0 +1,25 @@
+Licença do conteúdo pedagógico
+==============================
+
+O código-fonte deste repositório é distribuído sob a licença MIT, no arquivo
+LICENSE.
+
+O conteúdo pedagógico é distribuído sob outra licença: Creative Commons
+Atribuição-CompartilhaIgual 4.0 Internacional (CC BY-SA 4.0).
+
+    https://creativecommons.org/licenses/by-sa/4.0/deed.pt-br
+
+Copyright (c) 2026 Wyllgner Amorim
+
+O que está sob CC BY-SA 4.0:
+
+  - Os enunciados, o conteúdo que ensina cada conceito, os exemplos e os
+    glossários, definidos em database/seeders/ExerciseSeeder.php.
+  - As paráfrases de sinalização, que são o texto enviado ao avatar no lugar
+    do termo técnico, no campo "sinais" do mesmo arquivo.
+  - Os textos de feedback de reserva em app/Services/FeedbackService.php.
+
+Por que duas licenças: material didático acessível para estudantes surdos é
+escasso, e a CC BY-SA obriga quem melhorar este conteúdo a devolver as
+melhorias sob a mesma licença. O código não tem essa exigência, para não criar
+barreira a quem quiser integrá-lo a outros sistemas.
