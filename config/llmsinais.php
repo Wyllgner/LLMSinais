@@ -37,6 +37,7 @@ return [
 
     'feedback' => [
         'nivel_maximo' => 4,
+        'erro_timeout' => 'O programa demorou demais. Ele não parou sozinho.',
     ],
 
 ];

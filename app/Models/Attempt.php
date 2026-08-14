@@ -34,4 +34,14 @@ class Attempt extends Model
         return collect($this->resultado_testes ?? [])
             ->firstWhere('passou', false);
     }
+
+    /**
+     * O laco infinito e o unico erro que nao deixa stderr: o container morre
+     * antes de o Python escrever qualquer coisa.
+     */
+    public function houveTimeout(): bool
+    {
+        return collect($this->resultado_testes ?? [])
+            ->contains('status', 'timeout');
+    }
 }

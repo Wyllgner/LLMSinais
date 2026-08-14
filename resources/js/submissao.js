@@ -34,7 +34,7 @@ async function submeter() {
     botao.textContent = 'Submeter';
 
     if (!dados) {
-        painel.innerHTML = aviso('Nao foi possivel executar o codigo agora. Tente de novo.');
+        painel.innerHTML = aviso('Não foi possível executar o código agora. Tente de novo.');
         return;
     }
 
@@ -80,13 +80,13 @@ async function simplificarErro() {
     const dados = await enviar(`/tentativa/${tentativaAtual}/erro-simples`);
     if (!dados) {
         btn.disabled = false;
-        btn.textContent = 'Ver em portugues simples';
+        btn.textContent = 'Ver em português simples';
         return;
     }
 
     btn.outerHTML = blocoTraduzivel({
         id: 'erro-simples',
-        titulo: 'O que aconteceu, em portugues simples',
+        titulo: 'O que aconteceu, em português simples',
         segmentos: dados.segmentos,
         cor: 'clay-btn-pessego',
     });
@@ -142,7 +142,7 @@ function desenhar(dados) {
              <span class="clay-selo flex h-12 w-12 shrink-0 items-center justify-center bg-menta text-xl text-menta-forte">✓</span>
              <div>
                <p class="font-bold">Todos os testes passaram.</p>
-               <p class="text-sm text-argila-tinta-fraca">Voce concluiu este exercicio.</p>
+               <p class="text-sm text-argila-tinta-fraca">Você concluiu este exercício.</p>
              </div>
            </div>`
         : `<div class="clay flex items-center gap-4 p-5">
@@ -172,13 +172,19 @@ function desenhar(dados) {
            </div>`
         : '';
 
-    // Bloco 1 do escalonamento: o erro bruto, sem reescrita.
-    const bruto = dados.stderr
+    // Bloco 1 do escalonamento: o erro bruto, sem reescrita. O laco infinito
+    // nao deixa stderr, mas ainda tem o que simplificar, entao entra aqui com
+    // o lugar da mensagem vazio.
+    const houveTimeout = dados.testes.some((t) => t.status === 'timeout');
+
+    const bruto = dados.stderr || houveTimeout
         ? `<div class="clay p-5">
              <h3 class="mb-3 text-sm font-bold uppercase tracking-wide text-argila-tinta-fraca">Mensagem do sistema</h3>
-             <pre class="clay-cava overflow-x-auto whitespace-pre-wrap bg-argila-fundo p-4 font-mono text-xs">${escapar(dados.stderr)}</pre>
+             ${dados.stderr
+                 ? `<pre class="clay-cava overflow-x-auto whitespace-pre-wrap bg-argila-fundo p-4 font-mono text-xs">${escapar(dados.stderr)}</pre>`
+                 : `<p class="clay-cava bg-argila-fundo p-4 text-xs text-argila-tinta-fraca">O programa foi interrompido antes de escrever qualquer mensagem.</p>`}
              <button type="button" id="btn-simplificar" class="clay-btn clay-btn-pessego mt-4 px-5 py-2 text-xs">
-               Ver em portugues simples
+               Ver em português simples
              </button>
            </div>`
         : '';

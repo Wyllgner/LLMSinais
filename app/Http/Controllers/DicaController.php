@@ -26,11 +26,11 @@ class DicaController extends Controller
         $maximo = config('llmsinais.feedback.nivel_maximo');
 
         if ($tentativa->passou) {
-            return response()->json(['mensagem' => 'Esta tentativa ja passou nos testes.'], 422);
+            return response()->json(['mensagem' => 'Esta tentativa já passou nos testes.'], 422);
         }
 
         if ($tentativa->nivel_dica >= $maximo) {
-            return response()->json(['mensagem' => 'Voce ja viu todas as dicas.'], 422);
+            return response()->json(['mensagem' => 'Você já viu todas as dicas.'], 422);
         }
 
         $nivel = $tentativa->nivel_dica + 1;
@@ -72,8 +72,17 @@ class DicaController extends Controller
             throw new AccessDeniedHttpException;
         }
 
-        if (! $tentativa->stderr_bruto) {
-            return response()->json(['mensagem' => 'Esta tentativa nao gerou mensagem de erro.'], 422);
+        // O timeout nao produz stderr, mas e o erro que o aluno mais precisa
+        // entender. A frase e fixa: nao ha mensagem do interpretador para
+        // simplificar, e o texto ja esta no vocabulario que o avatar sinaliza.
+        if (! $tentativa->stderr_bruto && $tentativa->houveTimeout() && ! $tentativa->erro_simplificado) {
+            $tentativa->update([
+                'erro_simplificado' => config('llmsinais.feedback.erro_timeout'),
+            ]);
+        }
+
+        if (! $tentativa->stderr_bruto && ! $tentativa->erro_simplificado) {
+            return response()->json(['mensagem' => 'Esta tentativa não gerou mensagem de erro.'], 422);
         }
 
         if (! $tentativa->erro_simplificado) {
