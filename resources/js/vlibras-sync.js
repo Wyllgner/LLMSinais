@@ -8,6 +8,7 @@
  */
 
 import { alinhar } from './glosa';
+import { fecharMedicao, iniciarMedicao } from './medicao';
 
 const CLASSES_REALCE = ['segmento-ativo'];
 const CLASSE_PALAVRA = 'palavra-ativa';
@@ -82,6 +83,13 @@ class Sincronizador {
         if (!texto) return;
 
         this.prepararParaSinais(elemento, texto);
+
+        // A origem diz de que ponto da cadeia o texto veio, que e o que
+        // permite comparar stderr bruto, erro simplificado e dica.
+        this.origem = elemento.closest('.bloco-traduzivel')?.dataset.bloco ?? 'desconhecida';
+        this.textoMedido = texto;
+
+        iniciarMedicao(this.origem, texto);
         window.plugin?.translate(texto);
     }
 
@@ -139,6 +147,10 @@ class Sincronizador {
 
         this.mostrarSinalAtual(indice, total);
 
+        // O ultimo sinal fecha a janela de medicao. O evento animation:end nao
+        // serve: ele tambem dispara na largada, antes de qualquer sinal.
+        if (indice >= total - 1) this.encerrarMedicao();
+
         if (!this.palavras.length) return;
 
         const alvo = this.alinhamento[indice];
@@ -149,6 +161,10 @@ class Sincronizador {
         if (alvo === null || alvo === undefined) return;
 
         this.palavras[alvo]?.classList.add(CLASSE_PALAVRA);
+    }
+
+    encerrarMedicao() {
+        if (this.textoMedido) fecharMedicao(this.origem, this.textoMedido);
     }
 
     limparPalavra() {
