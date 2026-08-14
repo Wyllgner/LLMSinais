@@ -1,12 +1,13 @@
 /**
  * Sincroniza o texto escrito com o sinal exibido pelo avatar do VLibras.
  *
- * O widget oficial nao expoe API publica para traduzir um trecho sob comando
- * nem eventos de progresso por sinal. Por isso a granularidade e o segmento,
- * uma frase curta, e nao a palavra. O aluno controla o avanco.
+ * O widget traduz um trecho sob comando, por window.plugin.translate, mas nao
+ * emite evento de progresso por sinal. Sem saber quando cada sinal termina, a
+ * granularidade e o segmento, uma frase curta, e nao a palavra. O aluno
+ * controla o avanco.
  */
 
-const CLASSES_REALCE = ['bg-yellow-200', 'ring-2', 'ring-yellow-400'];
+const CLASSES_REALCE = ['segmento-ativo'];
 
 class Sincronizador {
     constructor() {

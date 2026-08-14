@@ -9,7 +9,7 @@
 #area-vlibras {
     position: relative;
     overflow: hidden;
-    min-height: 22rem;
+    min-height: 17rem;
 }
 
 /* O contêiner [vw] tem o tamanho do botao de acesso, 40x40. Sem estica-lo, o
@@ -50,4 +50,144 @@
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+
+    /* Claymorfismo: superficies claras e foscas, cantos muito arredondados e
+       volume feito so de sombra. A paleta e pastel, mas o texto fica sempre em
+       tom escuro do mesmo matiz, para o contraste nao cair. */
+    --color-argila-fundo: #e8e9f7;
+    --color-argila-face: #f3f3fc;
+    --color-argila-borda: #ffffff;
+    --color-argila-tinta: #2f2b45;
+    --color-argila-tinta-fraca: #6f6a8d;
+
+    --color-lilas: #a99bf5;
+    --color-lilas-forte: #6b57d2;
+    --color-menta: #8fdcc0;
+    --color-menta-forte: #12795b;
+    --color-pessego: #f8b58c;
+    --color-pessego-forte: #b45816;
+    --color-rosa: #f5a3ae;
+    --color-rosa-forte: #b0304a;
+    --color-limao: #f5d98b;
+    --color-limao-forte: #8a6410;
+
+    --radius-argila: 1.75rem;
+}
+
+@layer base {
+    body {
+        background-color: var(--color-argila-fundo);
+        color: var(--color-argila-tinta);
+    }
+}
+
+@layer components {
+    /* O volume vem de quatro sombras: duas por fora, que descolam a peca do
+       fundo, e duas por dentro, que arredondam a superficie. Sem as de dentro
+       o elemento vira so um cartao com sombra. */
+    .clay {
+        background-color: var(--color-argila-face);
+        border-radius: var(--radius-argila);
+        box-shadow:
+            10px 10px 22px rgba(88, 82, 130, 0.2),
+            -8px -8px 20px rgba(255, 255, 255, 0.9),
+            inset -5px -5px 12px rgba(88, 82, 130, 0.09),
+            inset 6px 6px 14px rgba(255, 255, 255, 0.95);
+    }
+
+    /* Peca afundada, para tudo que recebe conteudo: editor, terminal, avatar. */
+    .clay-cava {
+        border-radius: calc(var(--radius-argila) - 0.5rem);
+        box-shadow:
+            inset 7px 7px 14px rgba(88, 82, 130, 0.18),
+            inset -6px -6px 12px rgba(255, 255, 255, 0.92);
+    }
+
+    .clay-btn {
+        border-radius: 999px;
+        font-weight: 600;
+        color: var(--color-argila-tinta);
+        background-color: var(--color-argila-face);
+        box-shadow:
+            6px 6px 14px rgba(88, 82, 130, 0.22),
+            -5px -5px 12px rgba(255, 255, 255, 0.9),
+            inset -3px -3px 8px rgba(88, 82, 130, 0.08),
+            inset 4px 4px 9px rgba(255, 255, 255, 0.95);
+        transition:
+            transform 0.12s ease,
+            box-shadow 0.12s ease;
+    }
+
+    .clay-btn:hover:not(:disabled) {
+        transform: translateY(-2px);
+    }
+
+    /* Apertado, a peca afunda: as sombras de fora encolhem e as de dentro
+       crescem. E o mesmo gesto do botao fisico. */
+    .clay-btn:active:not(:disabled) {
+        transform: translateY(1px);
+        box-shadow:
+            3px 3px 8px rgba(88, 82, 130, 0.2),
+            inset 5px 5px 10px rgba(88, 82, 130, 0.16),
+            inset -4px -4px 9px rgba(255, 255, 255, 0.85);
+    }
+
+    .clay-btn:disabled {
+        opacity: 0.5;
+        box-shadow:
+            inset 4px 4px 9px rgba(88, 82, 130, 0.14),
+            inset -3px -3px 7px rgba(255, 255, 255, 0.8);
+    }
+
+    .clay-btn:focus-visible {
+        outline: 3px solid var(--color-lilas-forte);
+        outline-offset: 3px;
+    }
+
+    .clay-btn-lilas {
+        background-color: var(--color-lilas);
+        color: #ffffff;
+    }
+
+    .clay-btn-menta {
+        background-color: var(--color-menta);
+        color: var(--color-menta-forte);
+    }
+
+    .clay-btn-pessego {
+        background-color: var(--color-pessego);
+        color: var(--color-pessego-forte);
+    }
+
+    /* Selo redondo dos nos da trilha e dos rotulos de erro. */
+    .clay-selo {
+        border-radius: 999px;
+        box-shadow:
+            5px 5px 12px rgba(88, 82, 130, 0.2),
+            -4px -4px 10px rgba(255, 255, 255, 0.9),
+            inset -2px -2px 6px rgba(88, 82, 130, 0.1),
+            inset 3px 3px 7px rgba(255, 255, 255, 0.9);
+    }
+
+    /* O segmento em traducao. O realce precisa vencer o fundo pastel, entao e
+       um bloco solido com sombra propria, nao um fundo amarelo transparente. */
+    .segmento {
+        border-radius: 0.9rem;
+        padding: 0.1rem 0.45rem;
+        transition: background-color 0.15s ease;
+    }
+
+    .segmento:hover {
+        background-color: rgba(169, 155, 245, 0.22);
+    }
+
+    .segmento-ativo {
+        background-color: var(--color-limao);
+        color: var(--color-limao-forte);
+        font-weight: 600;
+        box-shadow:
+            4px 4px 10px rgba(138, 100, 16, 0.28),
+            inset -2px -2px 6px rgba(138, 100, 16, 0.12),
+            inset 2px 2px 6px rgba(255, 255, 255, 0.7);
+    }
 }

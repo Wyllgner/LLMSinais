@@ -3,94 +3,98 @@
 @section('titulo', 'Trilha de Programacao I')
 
 @section('conteudo')
-<div class="mx-auto max-w-2xl px-4 py-10">
+<div class="mx-auto max-w-3xl px-4 py-10">
 
-    <h1 class="mb-2 text-2xl font-semibold">Trilha de Programacao I</h1>
-    <p class="mb-8 text-slate-600">Siga os niveis em ordem. Cada nivel abre quando voce termina o anterior.</p>
+    <h1 class="mb-2 text-3xl font-bold tracking-tight">Trilha de Programacao I</h1>
+    <p class="mb-8 text-argila-tinta-fraca">
+        Siga os niveis em ordem. Cada nivel abre quando voce termina o anterior.
+    </p>
 
     @if ($progresso['tentativas'] > 0)
-        <section class="mb-10 rounded-lg border border-slate-200 bg-white p-5">
-            <h2 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">Seu progresso</h2>
+        <section class="clay mb-10 p-7">
+            <h2 class="mb-5 text-sm font-bold uppercase tracking-wide text-argila-tinta-fraca">Seu progresso</h2>
 
-            <div class="mb-5 grid grid-cols-3 gap-4 text-center">
-                <div>
-                    <p class="text-2xl font-semibold text-slate-900">
-                        {{ $progresso['exercicios_concluidos'] }}<span class="text-base text-slate-400">/{{ $progresso['exercicios_totais'] }}</span>
-                    </p>
-                    <p class="text-xs text-slate-500">exercicios</p>
-                </div>
-                <div>
-                    <p class="text-2xl font-semibold text-slate-900">{{ $progresso['tentativas'] }}</p>
-                    <p class="text-xs text-slate-500">tentativas</p>
-                </div>
-                <div>
-                    <p class="text-2xl font-semibold text-slate-900">{{ $progresso['taxa_acerto'] }}%</p>
-                    <p class="text-xs text-slate-500">de acerto</p>
-                </div>
+            <div class="mb-6 grid grid-cols-3 gap-4">
+                @php
+                    $numeros = [
+                        ['valor' => $progresso['exercicios_concluidos'].'/'.$progresso['exercicios_totais'], 'rotulo' => 'exercicios', 'cor' => 'bg-menta text-menta-forte'],
+                        ['valor' => $progresso['tentativas'], 'rotulo' => 'tentativas', 'cor' => 'bg-lilas text-white'],
+                        ['valor' => $progresso['taxa_acerto'].'%', 'rotulo' => 'de acerto', 'cor' => 'bg-pessego text-pessego-forte'],
+                    ];
+                @endphp
+
+                @foreach ($numeros as $numero)
+                    <div class="clay-cava flex flex-col items-center gap-2 px-2 py-4">
+                        <span class="clay-selo flex h-14 w-14 items-center justify-center text-lg font-bold {{ $numero['cor'] }}">
+                            {{ $numero['valor'] }}
+                        </span>
+                        <span class="text-xs font-medium text-argila-tinta-fraca">{{ $numero['rotulo'] }}</span>
+                    </div>
+                @endforeach
             </div>
 
             @if (count($progresso['erros_recorrentes']))
                 @php $maior = $progresso['erros_recorrentes'][0]['total']; @endphp
 
-                <h3 class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Onde voce mais erra</h3>
-                <ul class="space-y-2">
+                <h3 class="mb-3 text-xs font-bold uppercase tracking-wide text-argila-tinta-fraca">
+                    Onde voce mais erra
+                </h3>
+                <ul class="space-y-3">
                     @foreach ($progresso['erros_recorrentes'] as $erro)
                         <li class="flex items-center gap-3 text-sm">
-                            <span class="w-44 shrink-0 text-slate-700">{{ $erro['rotulo'] }}</span>
-                            <span class="h-2 flex-1 rounded-full bg-slate-100">
-                                <span class="block h-2 rounded-full bg-amber-400"
+                            <span class="w-44 shrink-0 font-medium">{{ $erro['rotulo'] }}</span>
+                            <span class="clay-cava h-4 flex-1 overflow-hidden">
+                                <span class="block h-4 rounded-full bg-rosa"
                                       style="width: {{ round($erro['total'] / $maior * 100) }}%"></span>
                             </span>
-                            <span class="w-8 text-right text-slate-500">{{ $erro['total'] }}x</span>
+                            <span class="w-9 text-right font-semibold text-argila-tinta-fraca">{{ $erro['total'] }}x</span>
                         </li>
                     @endforeach
                 </ul>
             @endif
 
             @if ($progresso['proximo'])
-                <p class="mt-5 text-sm text-slate-600">
-                    Continue em
-                    <a href="{{ route('exercicio', $progresso['proximo']) }}"
-                       class="font-medium text-sky-700 underline underline-offset-4">{{ $progresso['proximo']->titulo }}</a>.
-                </p>
+                <a href="{{ route('exercicio', $progresso['proximo']) }}"
+                   class="clay-btn clay-btn-lilas mt-6 inline-block px-6 py-2.5 text-sm">
+                    Continuar em {{ $progresso['proximo']->titulo }}
+                </a>
             @else
-                <p class="mt-5 text-sm font-medium text-emerald-700">Voce concluiu todos os exercicios da trilha.</p>
+                <p class="clay-cava mt-6 px-5 py-3 text-sm font-semibold text-menta-forte">
+                    Voce concluiu todos os exercicios da trilha.
+                </p>
             @endif
         </section>
     @endif
 
-    <ol class="relative">
+    <ol class="relative space-y-5">
         @foreach ($exercicios as $exercicio)
-            <li class="relative flex items-start gap-5 pb-10 last:pb-0">
+            @php
+                $selo = $exercicio->concluido
+                    ? 'bg-menta text-menta-forte'
+                    : ($exercicio->liberado ? 'bg-lilas text-white' : 'bg-argila-face text-argila-tinta-fraca');
+            @endphp
 
-                @unless ($loop->last)
-                    <span class="absolute left-7 top-14 h-full w-0.5 {{ $exercicio->concluido ? 'bg-emerald-400' : 'bg-slate-200' }}"
-                          aria-hidden="true"></span>
-                @endunless
+            <li class="clay flex items-center gap-5 p-5 {{ $exercicio->liberado ? '' : 'opacity-60' }}">
 
-                @php
-                    $classesNo = $exercicio->concluido
-                        ? 'bg-emerald-500 text-white ring-emerald-200'
-                        : ($exercicio->liberado
-                            ? 'bg-white text-slate-700 ring-slate-300'
-                            : 'bg-slate-100 text-slate-400 ring-slate-200');
-                @endphp
-
-                <span class="z-10 flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-lg font-semibold ring-4 {{ $classesNo }}">
+                <span class="clay-selo flex h-16 w-16 shrink-0 items-center justify-center text-xl font-bold {{ $selo }}">
                     {{ $exercicio->concluido ? '✓' : $exercicio->ordem }}
                 </span>
 
-                <div class="pt-2">
-                    @if ($exercicio->liberado)
-                        <a href="{{ route('exercicio', $exercicio) }}"
-                           class="text-lg font-medium text-slate-900 underline-offset-4 hover:underline">
-                            {{ $exercicio->titulo }}
-                        </a>
-                    @else
-                        <span class="text-lg font-medium text-slate-400">{{ $exercicio->titulo }}</span>
-                    @endif
-                    <p class="mt-1 text-sm capitalize text-slate-500">{{ $exercicio->conceito }}</p>
+                <div class="min-w-0 flex-1">
+                    <p class="text-lg font-bold">{{ $exercicio->titulo }}</p>
+                    <p class="mt-0.5 text-sm capitalize text-argila-tinta-fraca">{{ $exercicio->conceito }}</p>
                 </div>
+
+                @if ($exercicio->liberado)
+                    <a href="{{ route('exercicio', $exercicio) }}"
+                       class="clay-btn shrink-0 px-5 py-2 text-sm {{ $exercicio->concluido ? '' : 'clay-btn-lilas' }}">
+                        {{ $exercicio->concluido ? 'Refazer' : 'Comecar' }}
+                    </a>
+                @else
+                    <span class="clay-cava shrink-0 px-4 py-2 text-xs font-semibold text-argila-tinta-fraca">
+                        Bloqueado
+                    </span>
+                @endif
 
             </li>
         @endforeach

@@ -7,14 +7,17 @@
     <title>@yield('titulo', 'LLMSinais')</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="min-h-screen bg-slate-50 text-slate-900 antialiased">
+<body class="min-h-screen antialiased">
 
-    <header class="border-b border-slate-200 bg-white">
-        <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-            <a href="{{ route('trilha') }}" class="text-lg font-semibold tracking-tight">
-                LLMSinais
+    <header class="px-4 pt-4">
+        <div class="clay mx-auto flex max-w-[1600px] items-center justify-between px-6 py-3">
+            <a href="{{ route('trilha') }}" class="flex items-center gap-3">
+                <span class="clay-selo flex h-10 w-10 items-center justify-center bg-lilas text-lg font-bold text-white">
+                    L
+                </span>
+                <span class="text-lg font-bold tracking-tight text-argila-tinta">LLMSinais</span>
             </a>
-            <span class="text-sm text-slate-500">Programacao I acessivel</span>
+            <span class="text-sm font-medium text-argila-tinta-fraca">Programacao I acessivel</span>
         </div>
     </header>
 
