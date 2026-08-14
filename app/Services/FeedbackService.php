@@ -45,21 +45,38 @@ class FeedbackService
             return ['texto' => $this->reserva($tentativa->tipo_erro, $nivel), 'uso' => $uso];
         }
 
-        // O prompt sozinho nao impede o vazamento da solucao, entao a saida
-        // passa por uma verificacao sintatica e uma segunda tentativa.
-        if ($this->vazouCodigo($r['texto'], $nivel)) {
-            $r = $this->chamar(
-                $sistema,
-                $usuario."\n\nATENCAO: a resposta anterior mostrou codigo. Escreva sem nenhum codigo."
-            );
+        // O prompt sozinho nao impede nem o vazamento da solucao nem a
+        // invencao de estruturas, entao a saida passa por verificacao e uma
+        // segunda tentativa, com o defeito nomeado.
+        if ($defeito = $this->defeito($r['texto'], $tentativa, $nivel)) {
+            $r = $this->chamar($sistema, $usuario."\n\n".$defeito);
             $uso = $this->somarUso($uso, $r['uso']);
 
-            if ($r['texto'] === null || $this->vazouCodigo($r['texto'], $nivel)) {
+            if ($r['texto'] === null || $this->defeito($r['texto'], $tentativa, $nivel)) {
                 return ['texto' => $this->reserva($tentativa->tipo_erro, $nivel), 'uso' => $uso];
             }
         }
 
-        return $this->passarPeloPortao($r['texto'], $sistema, $usuario, $nivel, $uso);
+        return $this->passarPeloPortao($r['texto'], $sistema, $usuario, $nivel, $uso, $tentativa);
+    }
+
+    /**
+     * O que ha de errado com a dica, em forma de instrucao para o modelo.
+     * Devolve string vazia quando a dica passa.
+     */
+    private function defeito(string $texto, Attempt $tentativa, int $nivel): string
+    {
+        if ($this->vazouCodigo($texto, $nivel)) {
+            return 'ATENCAO: a resposta anterior entregou a solucao. '
+                .'Escreva de novo sem codigo e sem dizer qual e a correcao.';
+        }
+
+        if ($this->citaEstruturaAusente($texto, $tentativa)) {
+            return 'ATENCAO: a resposta anterior falou de uma estrutura que nao existe '
+                .'no codigo do aluno. Releia o codigo recebido e fale apenas do que esta la.';
+        }
+
+        return '';
     }
 
     /**
@@ -70,7 +87,7 @@ class FeedbackService
      *
      * @return array{texto: string, uso: array, sinalizabilidade: array}
      */
-    private function passarPeloPortao(string $texto, string $sistema, string $usuario, int $nivel, array $uso): array
+    private function passarPeloPortao(string $texto, string $sistema, string $usuario, int $nivel, array $uso, Attempt $tentativa): array
     {
         $avaliacao = $this->sinalizabilidade->avaliar($texto);
 
@@ -83,7 +100,7 @@ class FeedbackService
         $r = $this->chamar($sistema, $usuario."\n\n".$this->instrucaoDeReparo($avaliacao));
         $uso = $this->somarUso($uso, $r['uso']);
 
-        if ($r['texto'] === null || $this->vazouCodigo($r['texto'], $nivel)) {
+        if ($r['texto'] === null || $this->defeito($r['texto'], $tentativa, $nivel)) {
             return ['texto' => $texto, 'uso' => $uso, 'sinalizabilidade' => $avaliacao];
         }
 
@@ -179,6 +196,8 @@ class FeedbackService
         - Nunca use rotulos como Nivel, Conceito, Estrategia, Correcao ou Dica.
         - Fale com o aluno, nunca com o professor.
         - Comente apenas o codigo que voce recebeu. Nao invente linhas.
+        - Fale so das estruturas que existem no codigo recebido.
+        - Nunca repita nem parafraseie as regras acima dentro da dica.
         TXT;
     }
 
@@ -195,7 +214,7 @@ class FeedbackService
             E proibido explicar o motivo do erro.
             E proibido dizer o que mudar.
             E proibido escrever codigo.
-            Exemplo do tom certo: Olhe a condicao do seu laco. Olhe tambem o que muda dentro dele.
+            Tom certo, so como forma: duas frases curtas que mandam olhar um lugar.
             TXT,
             2 => <<<'TXT'
             Sua tarefa agora e explicar o CONCEITO geral por tras do erro.
@@ -203,20 +222,23 @@ class FeedbackService
             E proibido citar as variaveis do aluno.
             E proibido dizer qual e a correcao.
             E proibido escrever codigo.
-            Exemplo do tom certo: Um laco repete enquanto a condicao for verdadeira. Se nada muda, a condicao continua verdadeira para sempre.
+            Tom certo, so como forma: uma regra geral da linguagem, em duas frases.
             TXT,
             3 => <<<'TXT'
-            Sua tarefa agora e sugerir uma ESTRATEGIA de verificacao.
-            Diga o que o aluno deve conferir no proprio codigo.
+            Sua tarefa agora e sugerir UMA estrategia de verificacao.
+            Diga uma coisa que o aluno deve conferir no proprio codigo.
+            Escreva no maximo 3 frases.
+            E proibido fazer lista de conferencia.
+            E proibido comecar mais de uma frase com o mesmo verbo.
             E proibido dizer o valor certo.
             E proibido dizer o operador certo.
             E proibido escrever codigo.
-            Exemplo do tom certo: Verifique se algum valor da condicao muda a cada repeticao. Sem essa mudanca o laco nao para.
+            Tom certo, so como forma: uma conferencia concreta, mais o motivo dela.
             TXT,
             default => <<<'TXT'
             Sua tarefa agora e mostrar a correcao do trecho especifico.
             Mostre apenas o trecho que muda, nunca o programa inteiro.
-            Exemplo do tom certo: Dentro do laco, aumente o contador em 1 com i = i + 1.
+            Tom certo, so como forma: uma frase que nomeia o lugar e a mudanca.
             TXT,
         };
     }
@@ -268,7 +290,7 @@ class FeedbackService
         E proibido citar tentativas anteriores. Voce nao viu o codigo delas.
         E proibido dizer quantas vezes o aluno errou.
         E proibido inventar exercicios que o aluno teria feito antes.
-        Exemplo do tom certo: Antes de rodar, confira sempre o ultimo valor do seu range.
+        Tom certo, so como forma: um habito de conferencia, comecando por Antes de rodar.
         TXT;
     }
 
@@ -362,6 +384,16 @@ class FeedbackService
             return $vazio;
         }
 
+        // Truncar por teto de tokens devolve conteudo vazio, e o sintoma
+        // chega ao aluno como feedback de reserva generico. Sem este aviso o
+        // problema fica invisivel: a chamada retorna 200 e parece sucesso.
+        if ($resposta->json('choices.0.finish_reason') === 'length') {
+            Log::warning('Resposta da LLM truncada pelo teto de tokens', [
+                'teto' => $cfg['max_tokens'],
+                'raciocinio' => $resposta->json('usage.completion_tokens_details.reasoning_tokens'),
+            ]);
+        }
+
         // Os tokens de raciocinio ja vem somados em completion_tokens.
         $uso = [
             'entrada' => (int) $resposta->json('usage.prompt_tokens', 0),
@@ -405,7 +437,98 @@ class FeedbackService
 
         return str_contains($texto, '```')
             || preg_match('/\b(for|while|if|def|range|print|input|int)\s*[\(:]/', $texto) === 1
-            || preg_match('/[a-zA-Z_]\w*\s*=\s*\S/', $texto) === 1;
+            || preg_match('/[a-zA-Z_]\w*\s*=\s*\S/', $texto) === 1
+            || $this->vazouSolucaoEmProsa($texto, $nivel);
+    }
+
+    /**
+     * As estruturas que a dica pode citar, e como reconhecer cada uma no
+     * codigo do aluno. Falar de laco para quem nao escreveu laco e o tipo de
+     * alucinacao mais comum aqui, e a mais confusa para quem esta comecando.
+     */
+    private const ESTRUTURAS = [
+        'laco' => ['for', 'while'],
+        'repeticao' => ['for', 'while'],
+        'volta' => ['for', 'while'],
+        'range' => ['range'],
+        'lista' => ['range', '[', 'list'],
+        'condicao' => ['if', 'while', 'elif'],
+        'escolha' => ['if', 'elif'],
+        'funcao' => ['def'],
+        'contador' => ['for', 'while'],
+    ];
+
+    /**
+     * Barra a dica que fala de estrutura que o aluno nao escreveu.
+     *
+     * O gatilho observado foram os exemplos de tom do proprio prompt, todos
+     * com laco: o modelo copiava o conteudo do exemplo em vez do formato, e
+     * mandava conferir o range de um exercicio de variaveis. Os exemplos foram
+     * neutralizados, mas a verificacao fica, porque o prompt sozinho nunca
+     * garantiu nada neste projeto.
+     */
+    private function citaEstruturaAusente(string $texto, Attempt $tentativa): bool
+    {
+        $dica = mb_strtolower(iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $texto) ?: $texto);
+        $codigo = mb_strtolower($tentativa->codigo);
+
+        foreach (self::ESTRUTURAS as $palavra => $marcas) {
+            if (! preg_match('/\b'.$palavra.'s?\b/', $dica)) {
+                continue;
+            }
+
+            foreach ($marcas as $marca) {
+                if (str_contains($codigo, $marca)) {
+                    continue 2;
+                }
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * O detector antigo procurava sintaxe. Mas o modelo entrega a solucao em
+     * portugues, sem escrever uma linha de codigo: "o erro esta na expressao
+     * a mais b mais 1" reprova na pedagogia e passa em qualquer regex de
+     * sintaxe. Foi o vazamento observado nos niveis 1 e 3.
+     *
+     * A lista e heuristica e vai deixar passar formulacoes novas. Ela nao
+     * substitui o prompt, e uma segunda barreira depois dele.
+     */
+    private function vazouSolucaoEmProsa(string $texto, int $nivel): bool
+    {
+        $normalizado = mb_strtolower(iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $texto) ?: $texto);
+
+        $anunciaOErro = [
+            'o erro esta', 'o erro e ', 'o problema esta', 'o problema e ',
+            'esta errado', 'esta incorreto',
+        ];
+
+        $entregaACorrecao = [
+            'expressao correta', 'forma correta', 'o correto e', 'deveria ser',
+            'deve ser', 'tem que ser', 'troque', 'substitua', 'mude para',
+            'altere para', 'basta ', 'e so ', 'remova', 'apague', 'acrescente',
+            'adicione', 'sem acrescentar', 'sem adicionar', 'sem somar',
+            'no lugar de',
+        ];
+
+        // O nivel 3 pode dizer o que conferir, entao apontar o erro nao o
+        // reprova. Entregar a correcao continua proibido.
+        $proibidos = $nivel >= 3
+            ? $entregaACorrecao
+            : [...$anunciaOErro, ...$entregaACorrecao];
+
+        foreach ($proibidos as $marca) {
+            if (str_contains($normalizado, $marca)) {
+                return true;
+            }
+        }
+
+        // Aritmetica ditada por extenso, como "a mais b" ou "n mais 1".
+        return preg_match('/\b[a-z]\s+mais\s+[a-z0-9]\b/', $normalizado) === 1;
     }
 
     /**
@@ -425,6 +548,24 @@ class FeedbackService
                 2 => 'O range comeca no primeiro numero e para antes do segundo. O ultimo numero nao entra.',
                 3 => 'Ajuste o limite do seu range. Pense em qual numero precisa aparecer por ultimo.',
                 4 => 'Use range de 1 ate n mais 1. Assim o numero n tambem aparece.',
+            ],
+            'logica' => [
+                1 => 'Compare o que apareceu na tela com o resultado esperado.',
+                2 => 'O programa roda ate o fim, mas faz uma conta diferente da pedida.',
+                3 => 'Refaca o teste no papel com os mesmos valores de entrada.',
+                4 => 'Ajuste a conta para produzir o resultado que o teste espera.',
+            ],
+            'sem_saida' => [
+                1 => 'Sua tela ficou vazia. O teste esperava um valor.',
+                2 => 'O programa so mostra alguma coisa quando voce manda mostrar.',
+                3 => 'Confira se existe uma linha que mostra o resultado.',
+                4 => 'Mostre o resultado da sua conta na ultima linha.',
+            ],
+            'variavel_nao_definida' => [
+                1 => 'Olhe o nome que aparece na mensagem do sistema.',
+                2 => 'O programa so conhece um nome depois que voce guarda um valor nele.',
+                3 => 'Confira se voce escreveu o mesmo nome nas duas linhas.',
+                4 => 'Corrija o nome para ficar igual ao que voce criou antes.',
             ],
             'sintaxe' => [
                 1 => 'Olhe a linha indicada na mensagem do sistema.',
