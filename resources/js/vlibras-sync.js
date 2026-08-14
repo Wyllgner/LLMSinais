@@ -1,18 +1,27 @@
 /**
  * Sincroniza o texto escrito com o sinal exibido pelo avatar do VLibras.
  *
- * O widget traduz um trecho sob comando, por window.plugin.translate, mas nao
- * emite evento de progresso por sinal. Sem saber quando cada sinal termina, a
- * granularidade e o segmento, uma frase curta, e nao a palavra. O aluno
- * controla o avanco.
+ * São duas granularidades ao mesmo tempo. O segmento, uma frase curta, e a
+ * unidade que o aluno controla: ele escolhe qual frase traduzir e avanca no
+ * proprio ritmo. Dentro da frase, o realce acompanha sinal a sinal, guiado
+ * pelo evento response:glosa, que o player dispara a cada sinal executado.
  */
 
+import { alinhar } from './glosa';
+
 const CLASSES_REALCE = ['segmento-ativo'];
+const CLASSE_PALAVRA = 'palavra-ativa';
 
 class Sincronizador {
     constructor() {
         this.blocoAtivo = null;
         this.indice = -1;
+
+        // Estado do realce por sinal, refeito a cada traducao.
+        this.palavras = [];
+        this.alinhamento = null;
+        this.glosa = null;
+        this.fraseEnviada = '';
     }
 
     get segmentos() {
@@ -60,6 +69,7 @@ class Sincronizador {
 
     limparRealce(bloco) {
         bloco?.querySelectorAll('.segmento').forEach((s) => s.classList.remove(...CLASSES_REALCE));
+        this.limparPalavra();
     }
 
     /**
@@ -69,7 +79,95 @@ class Sincronizador {
      */
     enviarAoVLibras(elemento) {
         const texto = elemento.dataset.texto?.trim();
-        if (texto) window.plugin?.translate(texto);
+        if (!texto) return;
+
+        this.prepararParaSinais(elemento, texto);
+        window.plugin?.translate(texto);
+    }
+
+    /**
+     * O realce por sinal so faz sentido quando o que esta na tela e o que foi
+     * enviado. Nos segmentos com parafrase de sinalizacao, o texto exibido e
+     * outro, entao a frase inteira fica realcada e nada e realcado por dentro.
+     */
+    prepararParaSinais(elemento, textoEnviado) {
+        this.alinhamento = null;
+        this.palavras = [];
+
+        if (elemento.textContent.trim() !== textoEnviado) return;
+
+        this.dividirEmPalavras(elemento);
+        this.palavras = [...elemento.querySelectorAll('.palavra')];
+        this.fraseEnviada = textoEnviado;
+    }
+
+    dividirEmPalavras(elemento) {
+        if (elemento.dataset.dividido === 'sim') return;
+
+        const partes = elemento.textContent.split(/(\s+)/);
+        elemento.textContent = '';
+
+        partes.forEach((parte) => {
+            if (parte === '') return;
+
+            if (/^\s+$/.test(parte)) {
+                elemento.appendChild(document.createTextNode(parte));
+                return;
+            }
+
+            const span = document.createElement('span');
+            span.className = 'palavra';
+            span.textContent = parte;
+            elemento.appendChild(span);
+        });
+
+        elemento.dataset.dividido = 'sim';
+    }
+
+    /**
+     * Chamado a cada sinal executado pelo avatar. A glosa so fica disponivel
+     * depois que a traducao volta do servidor, entao o alinhamento e feito no
+     * primeiro sinal, nao no envio.
+     */
+    aoExecutarSinal(indice, total) {
+        const glosa = window.plugin?.player?.gloss;
+
+        if (glosa && !this.alinhamento) {
+            this.glosa = glosa.split(/\s+/).filter(Boolean);
+            this.alinhamento = this.palavras.length ? alinhar(this.fraseEnviada, glosa) : [];
+        }
+
+        this.mostrarSinalAtual(indice, total);
+
+        if (!this.palavras.length) return;
+
+        const alvo = this.alinhamento[indice];
+
+        this.limparPalavra();
+
+        // Sinal sem palavra correspondente mantem a frase realcada e segue.
+        if (alvo === null || alvo === undefined) return;
+
+        this.palavras[alvo]?.classList.add(CLASSE_PALAVRA);
+    }
+
+    limparPalavra() {
+        document
+            .querySelectorAll('.' + CLASSE_PALAVRA)
+            .forEach((p) => p.classList.remove(CLASSE_PALAVRA));
+    }
+
+    /**
+     * Mostra qual sinal esta sendo executado. Serve ao aluno e serve tambem
+     * para tornar visivel o que o avatar entendeu da frase.
+     */
+    mostrarSinalAtual(indice, total) {
+        const painel = document.getElementById('sinal-atual');
+        if (!painel) return;
+
+        const sinal = this.glosa?.[indice];
+
+        painel.textContent = sinal ? `${sinal}  ·  sinal ${indice + 1} de ${total}` : '';
     }
 
     atualizarControles() {
@@ -151,9 +249,29 @@ function bloquearCapturaDeCliqueDoWidget() {
     };
 }
 
+/**
+ * O player e um EventEmitter e avisa a cada sinal executado, com o indice
+ * dentro da glosa e o total. E o que torna possivel o realce sinal a sinal.
+ *
+ * Ele so existe depois que o plugin carrega sob demanda, entao a inscricao
+ * espera por ele.
+ */
+function ouvirSinais() {
+    const timer = setInterval(() => {
+        const player = window.plugin?.player;
+        if (!player?.on) return;
+
+        clearInterval(timer);
+        player.on('response:glosa', (indice, total) => sincronizador.aoExecutarSinal(indice, total));
+    }, 500);
+
+    setTimeout(() => clearInterval(timer), 30000);
+}
+
 export function iniciarVLibras() {
     bloquearCapturaDeCliqueDoWidget();
     abrirWidget();
+    ouvirSinais();
 
     // Delegacao: os blocos de erro e feedback so existem depois da submissao.
     document.addEventListener('click', (e) => {

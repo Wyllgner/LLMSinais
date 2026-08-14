@@ -181,6 +181,17 @@
         background-color: rgba(169, 155, 245, 0.22);
     }
 
+    /* A palavra correspondente ao sinal em execucao. Fica por dentro do
+       segmento ja realcado, entao precisa de contraste proprio contra o
+       limao. */
+    .palavra-ativa {
+        background-color: var(--color-lilas-forte);
+        color: #ffffff;
+        border-radius: 0.5rem;
+        padding: 0.05rem 0.2rem;
+        box-shadow: 0 2px 6px rgba(107, 87, 210, 0.4);
+    }
+
     .segmento-ativo {
         background-color: var(--color-limao);
         color: var(--color-limao-forte);

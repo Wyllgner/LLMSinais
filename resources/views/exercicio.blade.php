@@ -149,6 +149,10 @@
                 <span id="posicao-segmento" class="w-full text-center text-xs font-semibold text-argila-tinta-fraca"></span>
             </div>
 
+            {{-- Mostra o sinal que o avatar executa neste instante. Deixa
+                 visivel o que ele entendeu da frase. --}}
+            <p id="sinal-atual" class="mt-3 min-h-5 text-center font-mono text-xs font-semibold text-lilas-forte"></p>
+
             <p class="mt-4 text-xs leading-relaxed text-argila-tinta-fraca">
                 Clique em qualquer frase da tela para ver o sinal dela.
             </p>
