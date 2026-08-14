@@ -21,8 +21,8 @@
         {{-- AREA 1: conteudo e enunciado --}}
         <section class="clay flex min-h-0 flex-col p-4">
             <div class="mb-3 flex shrink-0 items-center gap-2">
-                <button type="button" data-aba="conteudo" class="aba clay-btn px-4 py-1.5 text-sm">Conteudo</button>
-                <button type="button" data-aba="enunciado" class="aba clay-btn px-4 py-1.5 text-sm">Exercicio</button>
+                <button type="button" data-aba="conteudo" class="aba clay-btn px-4 py-1.5 text-sm">Conteúdo</button>
+                <button type="button" data-aba="enunciado" class="aba clay-btn px-4 py-1.5 text-sm">Exercício</button>
             </div>
 
             <div class="min-h-0 flex-1 overflow-y-auto pr-1">
@@ -44,7 +44,7 @@
                                      data-indice="{{ $i }}"
                                      data-texto="{{ $segmento['sinal'] }}">{{ $segmento['texto'] }}</span></p>
                         @empty
-                            <p class="text-sm text-argila-tinta-fraca">Este exercicio ainda nao tem conteudo.</p>
+                            <p class="text-sm text-argila-tinta-fraca">Este exercício ainda não tem conteúdo.</p>
                         @endforelse
                     </div>
 
@@ -55,7 +55,7 @@
                         <pre class="clay-cava overflow-x-auto bg-argila-fundo p-4 font-mono text-xs leading-relaxed">{{ $exercicio->exemplo }}</pre>
                     @endif
 
-                    {{-- Glossario: o termo tecnico fica na tela em ingles, que e
+                    {{-- Glossário: o termo tecnico fica na tela em ingles, que e
                          como ele aparece no codigo, e a explicacao ao lado e que
                          vai para o avatar. --}}
                     @if ($exercicio->glossario)
@@ -79,7 +79,7 @@
                 <div data-painel="enunciado" hidden>
                     <div class="mb-3 flex items-center justify-between gap-3">
                         <h2 class="text-sm font-bold uppercase tracking-wide text-argila-tinta-fraca">
-                            O que voce deve fazer
+                            O que você deve fazer
                         </h2>
                         <button type="button" data-bloco="enunciado"
                                 class="btn-traduzir clay-btn clay-btn-lilas shrink-0 px-4 py-1 text-xs">
@@ -110,7 +110,7 @@
         <section class="flex min-h-0 flex-col gap-4">
             <div class="clay flex min-h-0 flex-col p-4">
                 <div class="mb-3 flex shrink-0 items-center justify-between">
-                    <h2 class="text-sm font-bold uppercase tracking-wide text-argila-tinta-fraca">Seu codigo</h2>
+                    <h2 class="text-sm font-bold uppercase tracking-wide text-argila-tinta-fraca">Seu código</h2>
                     <button type="button" id="btn-submeter"
                             data-url="{{ route('submeter', $exercicio) }}"
                             class="clay-btn clay-btn-menta px-6 py-2 text-sm">
@@ -128,7 +128,7 @@
         {{-- AREA 3: o avatar, sempre visivel --}}
         <section class="clay flex min-h-0 flex-col p-4">
             <h2 class="mb-3 shrink-0 text-sm font-bold uppercase tracking-wide text-argila-tinta-fraca">
-                Traducao em Libras
+                Tradução em Libras
             </h2>
 
             {{-- O widget nasce aqui dentro. Mover o DOM depois quebra as
@@ -145,7 +145,7 @@
             <div id="controles-vlibras" class="mt-4 hidden shrink-0 flex-wrap items-center justify-center gap-2">
                 <button type="button" data-acao="anterior" class="clay-btn px-4 py-2 text-sm">Anterior</button>
                 <button type="button" data-acao="repetir" class="clay-btn clay-btn-pessego px-4 py-2 text-sm">Repetir</button>
-                <button type="button" data-acao="proximo" class="clay-btn px-4 py-2 text-sm">Proximo</button>
+                <button type="button" data-acao="proximo" class="clay-btn px-4 py-2 text-sm">Próximo</button>
                 <span id="posicao-segmento" class="w-full text-center text-xs font-semibold text-argila-tinta-fraca"></span>
             </div>
 

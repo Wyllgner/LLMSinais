@@ -31,21 +31,21 @@ class ClassificadorErro
      */
     private const ROTULOS = [
         'sem_erro' => 'Sem erro',
-        'laco_infinito' => 'Laco infinito',
+        'laco_infinito' => 'Laço infinito',
         'sintaxe' => 'Erro de escrita',
-        'indentacao' => 'Erro de espacos',
-        'variavel_nao_definida' => 'Variavel nao criada',
-        'divisao_por_zero' => 'Divisao por zero',
-        'indice_invalido' => 'Posicao que nao existe',
-        'chave_invalida' => 'Chave que nao existe',
+        'indentacao' => 'Erro de espaços',
+        'variavel_nao_definida' => 'Variável não criada',
+        'divisao_por_zero' => 'Divisão por zero',
+        'indice_invalido' => 'Posição que não existe',
+        'chave_invalida' => 'Chave que não existe',
         'conversao_invalida' => 'Valor de tipo errado',
-        'tipo_incompativel' => 'Tipos que nao combinam',
-        'atributo_invalido' => 'Comando que nao existe',
+        'tipo_incompativel' => 'Tipos que não combinam',
+        'atributo_invalido' => 'Comando que não existe',
         'entrada_insuficiente' => 'Falta ler um valor',
-        'sem_saida' => 'Nao mostrou nada',
-        'off_by_one' => 'Falta ou sobra um numero',
+        'sem_saida' => 'Não mostrou nada',
+        'off_by_one' => 'Falta ou sobra um número',
         'logica' => 'Resultado diferente',
-        'desconhecido' => 'Erro nao identificado',
+        'desconhecido' => 'Erro não identificado',
     ];
 
     public function rotuloHumano(string $tipo): string

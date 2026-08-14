@@ -17,7 +17,7 @@
                 </span>
                 <span class="text-lg font-bold tracking-tight text-argila-tinta">LLMSinais</span>
             </a>
-            <span class="text-sm font-medium text-argila-tinta-fraca">Programacao I acessivel</span>
+            <span class="text-sm font-medium text-argila-tinta-fraca">Programação I acessível</span>
         </div>
     </header>
 

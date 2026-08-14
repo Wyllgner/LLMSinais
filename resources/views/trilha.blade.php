@@ -1,13 +1,13 @@
 @extends('layouts.app')
 
-@section('titulo', 'Trilha de Programacao I')
+@section('titulo', 'Trilha de Programação I')
 
 @section('conteudo')
 <div class="mx-auto max-w-3xl px-4 py-10">
 
-    <h1 class="mb-2 text-3xl font-bold tracking-tight">Trilha de Programacao I</h1>
+    <h1 class="mb-2 text-3xl font-bold tracking-tight">Trilha de Programação I</h1>
     <p class="mb-8 text-argila-tinta-fraca">
-        Siga os niveis em ordem. Cada nivel abre quando voce termina o anterior.
+        Siga os níveis em ordem. Cada nível abre quando você termina o anterior.
     </p>
 
     @if ($progresso['tentativas'] > 0)
@@ -17,7 +17,7 @@
             <div class="mb-6 grid grid-cols-3 gap-4">
                 @php
                     $numeros = [
-                        ['valor' => $progresso['exercicios_concluidos'].'/'.$progresso['exercicios_totais'], 'rotulo' => 'exercicios', 'cor' => 'bg-menta text-menta-forte'],
+                        ['valor' => $progresso['exercicios_concluidos'].'/'.$progresso['exercicios_totais'], 'rotulo' => 'exercícios', 'cor' => 'bg-menta text-menta-forte'],
                         ['valor' => $progresso['tentativas'], 'rotulo' => 'tentativas', 'cor' => 'bg-lilas text-white'],
                         ['valor' => $progresso['taxa_acerto'].'%', 'rotulo' => 'de acerto', 'cor' => 'bg-pessego text-pessego-forte'],
                     ];
@@ -37,7 +37,7 @@
                 @php $maior = $progresso['erros_recorrentes'][0]['total']; @endphp
 
                 <h3 class="mb-3 text-xs font-bold uppercase tracking-wide text-argila-tinta-fraca">
-                    Onde voce mais erra
+                    Onde você mais erra
                 </h3>
                 <ul class="space-y-3">
                     @foreach ($progresso['erros_recorrentes'] as $erro)
@@ -60,7 +60,7 @@
                 </a>
             @else
                 <p class="clay-cava mt-6 px-5 py-3 text-sm font-semibold text-menta-forte">
-                    Voce concluiu todos os exercicios da trilha.
+                    Você concluiu todos os exercícios da trilha.
                 </p>
             @endif
         </section>
@@ -88,7 +88,7 @@
                 @if ($exercicio->liberado)
                     <a href="{{ route('exercicio', $exercicio) }}"
                        class="clay-btn shrink-0 px-5 py-2 text-sm {{ $exercicio->concluido ? '' : 'clay-btn-lilas' }}">
-                        {{ $exercicio->concluido ? 'Refazer' : 'Comecar' }}
+                        {{ $exercicio->concluido ? 'Refazer' : 'Começar' }}
                     </a>
                 @else
                     <span class="clay-cava shrink-0 px-4 py-2 text-xs font-semibold text-argila-tinta-fraca">
