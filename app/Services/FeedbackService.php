@@ -24,7 +24,14 @@ class FeedbackService
      */
     public function gerar(Attempt $tentativa, int $nivel): array
     {
-        $sistema = $this->promptDoSistema()."\n\n".$this->regraDoNivel($nivel);
+        $reincidencia = $this->reincidencia($tentativa);
+
+        $sistema = implode("\n\n", array_filter([
+            $this->promptDoSistema(),
+            $this->regraDoNivel($nivel),
+            $this->regraDaReincidencia($reincidencia, $nivel),
+        ]));
+
         $usuario = $this->promptDoUsuario($tentativa, $nivel);
         $uso = $this->usoZerado();
 
@@ -102,6 +109,9 @@ class FeedbackService
         - Prefira a palavra concreta quando ela existir.
         - Nao use ponto e virgula. Nao use travessao. Nao use parenteses.
         - Nao use palavras em ingles, exceto for, while, if, print, input e range.
+        - Termo em ingles nao tem sinal em Libras e sai soletrado letra por letra.
+        - Por isso use no maximo um termo em ingles na dica inteira.
+        - Prefira descrever a ordem: o laco, a escolha, a lista de numeros.
 
         FORMATO DA RESPOSTA:
         - Escreva apenas a dica. Nada mais.
@@ -149,6 +159,57 @@ class FeedbackService
             Exemplo do tom certo: Dentro do laco, aumente o contador em 1 com i = i + 1.
             TXT,
         };
+    }
+
+    /**
+     * O erro que o aluno repete neste conceito, se houver. Serve para a dica
+     * deixar de tratar a tentativa como um caso isolado.
+     *
+     * @return array{tipo: string, total: int}|null
+     */
+    private function reincidencia(Attempt $tentativa): ?array
+    {
+        if (! $tentativa->tipo_erro || $tentativa->tipo_erro === 'sem_erro') {
+            return null;
+        }
+
+        $anteriores = Attempt::where('sessao_uuid', $tentativa->sessao_uuid)
+            ->whereNot('id', $tentativa->id)
+            ->where('tipo_erro', $tentativa->tipo_erro)
+            ->whereHas('exercise', fn ($q) => $q->where('conceito', $tentativa->exercise->conceito))
+            ->count();
+
+        // Duas ocorrencias sao coincidencia. A partir da terceira e padrao.
+        return $anteriores >= 2
+            ? ['tipo' => $tentativa->tipo_erro, 'total' => $anteriores + 1]
+            : null;
+    }
+
+    /**
+     * Pedido do orientador: quando o aluno erra sempre na mesma coisa, a dica
+     * tambem ensina a evitar o erro. O risco aqui e a alucinacao, entao o
+     * modelo recebe o tipo de erro ja classificado por heuristica, e nao o
+     * historico bruto, e e proibido de descrever tentativas passadas.
+     */
+    private function regraDaReincidencia(?array $reincidencia, int $nivel): string
+    {
+        if (! $reincidencia) {
+            return '';
+        }
+
+        $rotulo = $this->classificador->rotuloHumano($reincidencia['tipo']);
+
+        return <<<TXT
+        ATENCAO, PADRAO DE ERRO.
+        Este aluno ja cometeu o erro "{$rotulo}" {$reincidencia['total']} vezes neste mesmo conceito.
+        Alem da dica do nivel {$nivel}, acrescente no maximo 1 frase.
+        Essa frase ensina um habito para evitar esse erro nas proximas vezes.
+        Use no maximo 5 frases no total.
+        E proibido citar tentativas anteriores. Voce nao viu o codigo delas.
+        E proibido dizer quantas vezes o aluno errou.
+        E proibido inventar exercicios que o aluno teria feito antes.
+        Exemplo do tom certo: Antes de rodar, confira sempre o ultimo valor do seu range.
+        TXT;
     }
 
     private function promptDoUsuario(Attempt $tentativa, int $nivel): string
