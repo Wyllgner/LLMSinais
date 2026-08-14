@@ -3,6 +3,50 @@
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
+/* O plugin desenha o avatar como sobreposicao fixa na tela. Aqui ele e contido
+   dentro da coluna por CSS. A estrutura do DOM nao e alterada: mover os nos
+   quebra as referencias internas do plugin. */
+#area-vlibras {
+    position: relative;
+    overflow: hidden;
+    min-height: 22rem;
+}
+
+/* O contêiner [vw] tem o tamanho do botao de acesso, 40x40. Sem estica-lo, o
+   wrapper resolve width 100% contra 40px e o avatar fica recortado. */
+#area-vlibras [vw],
+#area-vlibras [vw-plugin-wrapper],
+#area-vlibras .vw-plugin-top-wrapper {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+    transform: none !important;
+    margin: 0 !important;
+}
+
+#area-vlibras [vw-plugin-wrapper] {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+}
+
+/* O canvas mantem a proporcao propria, so nao pode estourar o quadro. */
+#area-vlibras canvas {
+    position: static !important;
+    display: block;
+    width: auto !important;
+    height: auto !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    margin: 0 auto;
+}
+
+/* O botao de acesso continua visivel: e o caminho nativo e garantido para
+   abrir o avatar, caso a abertura automatica nao funcione no navegador. */
+
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';

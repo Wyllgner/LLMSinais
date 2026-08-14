@@ -15,7 +15,7 @@
             <div class="mb-3 flex items-center justify-between">
                 <h1 class="text-xl font-semibold">{{ $exercicio->titulo }}</h1>
                 <button type="button"
-                        class="btn-traduzir rounded-md bg-sky-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-sky-700"
+                        class="btn-traduzir select-none rounded-md bg-sky-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-sky-700"
                         data-bloco="enunciado">
                     Traduzir com VLibras
                 </button>
@@ -45,11 +45,45 @@
                 </div>
             </div>
 
+            <div class="rounded-lg border border-slate-200 bg-white p-4">
+                <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">Traducao em Libras</h2>
+
+                {{-- O widget nasce aqui dentro. Mover o DOM depois quebra as
+                     referencias internas do plugin. --}}
+                <div id="area-vlibras" class="rounded-md border border-dashed border-slate-300 bg-slate-50">
+                    <div vw class="enabled">
+                        <div vw-access-button class="active"></div>
+                        <div vw-plugin-wrapper>
+                            <div class="vw-plugin-top-wrapper"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="controles-vlibras" class="mt-3 hidden items-center justify-center gap-2">
+                    <button type="button" data-acao="anterior"
+                            class="select-none rounded-md border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50 disabled:opacity-40">
+                        Anterior
+                    </button>
+                    <button type="button" data-acao="repetir"
+                            class="select-none rounded-md bg-slate-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800">
+                        Repetir
+                    </button>
+                    <button type="button" data-acao="proximo"
+                            class="select-none rounded-md border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50 disabled:opacity-40">
+                        Proximo
+                    </button>
+                    <span id="posicao-segmento" class="ml-2 text-sm text-slate-500"></span>
+                </div>
+            </div>
+
             <div id="painel-resultado" class="space-y-4"></div>
 
-            <div id="area-vlibras" class="rounded-lg border border-dashed border-slate-300 bg-white p-5 text-center text-sm text-slate-500">
-                O avatar do VLibras aparece aqui.
-            </div>
+            @push('scripts')
+                <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
+                <script>
+                    new window.VLibras.Widget('https://vlibras.gov.br/app');
+                </script>
+            @endpush
         </section>
 
     </div>
