@@ -22,4 +22,23 @@ class SegmentadorService
 
         return array_values(array_filter(array_map('trim', $partes ?: [])));
     }
+
+    /**
+     * Segmenta separando o que o aluno le do que o avatar sinaliza.
+     *
+     * Termo tecnico em ingles nao tem sinal estabelecido, entao o VLibras cai
+     * na datilologia e soletra letra por letra. A frase exibida mantem o termo,
+     * porque o aluno precisa aprende-lo, e a frase sinalizada usa uma parafrase
+     * em vocabulario comum. Sem parafrase cadastrada, as duas sao iguais.
+     *
+     * @param  array<string, string>  $sinais  frase exibida => frase sinalizada
+     * @return array<int, array{texto: string, sinal: string}>
+     */
+    public function segmentarParaLibras(string $texto, ?array $sinais = null): array
+    {
+        return array_map(
+            fn (string $frase) => ['texto' => $frase, 'sinal' => $sinais[$frase] ?? $frase],
+            $this->segmentar($texto)
+        );
+    }
 }

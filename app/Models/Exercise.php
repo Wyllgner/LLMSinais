@@ -8,12 +8,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Exercise extends Model
 {
     protected $fillable = [
-        'slug', 'titulo', 'conceito', 'ordem',
-        'enunciado', 'codigo_inicial', 'casos_teste',
+        'slug', 'titulo', 'conceito', 'ordem', 'conteudo', 'exemplo', 'exemplo_execucao',
+        'sinais', 'glossario', 'enunciado', 'codigo_inicial', 'casos_teste',
     ];
 
     protected $casts = [
         'casos_teste' => 'array',
+        'sinais' => 'array',
+        'glossario' => 'array',
     ];
 
     public function getRouteKeyName(): string
