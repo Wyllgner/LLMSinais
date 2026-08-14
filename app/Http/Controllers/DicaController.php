@@ -39,7 +39,8 @@ class DicaController extends Controller
         $dica = FeedbackLevel::firstWhere(['attempt_id' => $tentativa->id, 'nivel' => $nivel]);
 
         if (! $dica) {
-            ['texto' => $texto, 'uso' => $uso] = $this->feedback->gerar($tentativa, $nivel);
+            $gerada = $this->feedback->gerar($tentativa, $nivel);
+            ['texto' => $texto, 'uso' => $uso] = $gerada;
 
             $dica = FeedbackLevel::create([
                 'attempt_id' => $tentativa->id,
@@ -50,6 +51,8 @@ class DicaController extends Controller
                 'tokens_saida' => $uso['saida'],
                 'tokens_raciocinio' => $uso['raciocinio'],
                 'chamadas' => $uso['chamadas'],
+                'sinalizabilidade' => $gerada['sinalizabilidade']['indice'] ?? null,
+                'violacoes' => $gerada['sinalizabilidade']['violacoes'] ?? null,
             ]);
         }
 

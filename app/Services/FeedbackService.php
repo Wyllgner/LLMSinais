@@ -14,7 +14,10 @@ use Illuminate\Support\Facades\Log;
  */
 class FeedbackService
 {
-    public function __construct(private ClassificadorErro $classificador) {}
+    public function __construct(
+        private ClassificadorErro $classificador,
+        private SinalizabilidadeService $sinalizabilidade,
+    ) {}
 
     /**
      * Devolve o texto da dica e o consumo somado das chamadas que ela custou,
@@ -56,7 +59,64 @@ class FeedbackService
             }
         }
 
-        return ['texto' => $r['texto'], 'uso' => $uso];
+        return $this->passarPeloPortao($r['texto'], $sistema, $usuario, $nivel, $uso);
+    }
+
+    /**
+     * O portao de sinalizabilidade. A dica so vai para o aluno depois de ser
+     * medida, e uma reprovacao gera nova tentativa com os termos problematicos
+     * nomeados. Se a segunda tambem reprovar, fica a menos ruim das duas: uma
+     * dica imperfeita ainda ensina, e a alternativa seria nao dar dica.
+     *
+     * @return array{texto: string, uso: array, sinalizabilidade: array}
+     */
+    private function passarPeloPortao(string $texto, string $sistema, string $usuario, int $nivel, array $uso): array
+    {
+        $avaliacao = $this->sinalizabilidade->avaliar($texto);
+
+        // O nivel 4 mostra a correcao, entao termo e simbolo sao inevitaveis.
+        // Ele e medido para o relatorio, mas nao e reprovado por isso.
+        if ($avaliacao['aprovado'] || $nivel >= 4) {
+            return ['texto' => $texto, 'uso' => $uso, 'sinalizabilidade' => $avaliacao];
+        }
+
+        $r = $this->chamar($sistema, $usuario."\n\n".$this->instrucaoDeReparo($avaliacao));
+        $uso = $this->somarUso($uso, $r['uso']);
+
+        if ($r['texto'] === null || $this->vazouCodigo($r['texto'], $nivel)) {
+            return ['texto' => $texto, 'uso' => $uso, 'sinalizabilidade' => $avaliacao];
+        }
+
+        $segunda = $this->sinalizabilidade->avaliar($r['texto']);
+
+        return $segunda['indice'] >= $avaliacao['indice']
+            ? ['texto' => $r['texto'], 'uso' => $uso, 'sinalizabilidade' => $segunda]
+            : ['texto' => $texto, 'uso' => $uso, 'sinalizabilidade' => $avaliacao];
+    }
+
+    private function instrucaoDeReparo(array $avaliacao): string
+    {
+        $regras = array_unique(array_column($avaliacao['violacoes'], 'regra'));
+        $termos = $this->sinalizabilidade->termosReprovados($avaliacao['violacoes']);
+
+        $pedido = ['ATENCAO: a resposta anterior nao pode ser traduzida para Libras. Escreva de novo.'];
+
+        if (in_array('termo_sem_sinal', $regras, true)) {
+            $pedido[] = 'Estes termos nao tem sinal e sairiam soletrados letra por letra: '
+                .implode(', ', $termos).'.';
+            $pedido[] = 'Troque cada um por uma descricao em palavras comuns.';
+        }
+
+        if (in_array('frase_longa', $regras, true)) {
+            $pedido[] = 'Alguma frase passou de '.SinalizabilidadeService::PALAVRAS_POR_FRASE
+                .' palavras. Quebre em frases menores.';
+        }
+
+        if (in_array('simbolo_sem_sinal', $regras, true)) {
+            $pedido[] = 'Tire os simbolos e os parenteses. Escreva por extenso.';
+        }
+
+        return implode("\n", $pedido);
     }
 
     private function usoZerado(): array
